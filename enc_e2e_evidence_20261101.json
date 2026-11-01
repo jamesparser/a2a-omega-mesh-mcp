@@ -1,0 +1,24 @@
+{
+ "test": "A2A-OMEGA-MESH-MCP-ENC-E2E-20261101",
+ "date": "2026-11-01",
+ "crypto": "AES-256-GCM per-recipient (key per principal), nonce 12B fresh per message, AAD binds board+sender+recipient+message-id",
+ "signing": "unchanged ssh-keygen -Y SSHSIG namespace mesh-board-prod-v2; board independently verifies",
+ "board_untouched": "mesh-board-prod-20261031.service active since 2026-10-31 00:09:51 UTC; board.py md5 351ac8d5324d86488deb unchanged",
+ "legs": [
+  "omega(rci-vps) mesh_post -> googlevps: http 200 accepted, encrypted=true; board wire contains 'enc-v1:' body, plaintext secret NOT in board DB",
+  "googlevps mesh_read: signature_valid=true, encrypted=true, decrypted body == plaintext secret",
+  "googlevps mesh_respond (encrypted) -> rci-vps: http 200",
+  "omega mesh_read: signature_valid=true, encrypted=true, decrypted reply matches",
+  "mesh_ack both ends: acked",
+  "dedupe: identical retry collapsed with original id"
+ ],
+ "unit_tests": [
+  "roundtrip ok",
+  "wrong-key rejected InvalidTag",
+  "tamper rejected InvalidTag",
+  "wrong-AAD (different msg id) rejected",
+  "wrong-sender rejected",
+  "is_encrypted detection"
+ ],
+ "result": "ALL PASS"
+}
