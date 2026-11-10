@@ -280,6 +280,13 @@ def kanban_history(card_id=None):
         return {'error': 'card_id required'}
     res = _rpc('history', {'id': card_id})
     for t in res.get('transitions', []):
+        # The board names the state columns 'from'/'to'; older builds used
+        # 'from_state'/'to_state'. Normalize to BOTH so a caller never has
+        # to care which build answered.
+        if 'from' in t and 'from_state' not in t:
+            t['from_state'] = t['from']
+        if 'to' in t and 'to_state' not in t:
+            t['to_state'] = t['to']
         try:
             t['note'] = _dec(t.get('note', ''), card_id)
         except Exception:
