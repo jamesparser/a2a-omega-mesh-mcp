@@ -342,10 +342,17 @@ class Kanban:
         if op == 'comment':
             if set(payload) != {'id', 'note'}:
                 raise ValueError('comment schema')
-            if not d.execute('SELECT 1 FROM cards WHERE id=?', (payload['id'],)).fetchone():
+            row = d.execute('SELECT state FROM cards WHERE id=?',
+                            (payload['id'],)).fetchone()
+            if row is None:
                 raise ValueError('no such card')
+            # A comment does not change state, but transitions.to_state is
+            # NOT NULL, so record the card's CURRENT state on both ends.
+            # Passing NULL here raised IntegrityError and killed the whole
+            # board process - every comment from every principal failed.
+            cur_state = row[0]
             d.execute('INSERT INTO transitions(card_id,actor,from_state,to_state,note,at) '
-                      'VALUES(?,?,?,?,?,?)', (payload['id'], p, None, None,
+                      'VALUES(?,?,?,?,?,?)', (payload['id'], p, cur_state, cur_state,
                                              clip_note(payload['note']), now))
             return {'status': 'commented', 'id': payload['id']}
 
